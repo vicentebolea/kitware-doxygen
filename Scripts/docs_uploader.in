@@ -1,0 +1,137 @@
+#!/usr/bin/env bash
+
+set -e
+
+readonly KDOCS_DATA_DIR="${KDOCS_DATA_DIR:-@CMAKE_INSTALL_FULL_DATADIR@/kitware-doxygen}"
+
+readonly HELP_MSG="usage: docs_uploader [options]
+  options:
+    -p name       Project name (e.g. paraview), <MANDATORY>.
+    -U url        Base URL of the docs site, <MANDATORY>.
+    -s path       Project source directory, <MANDATORY>.
+    -b path       Project build directory, <MANDATORY>.
+    -w path       Working directory for this program, <MANDATORY>.
+    -t types      Space-separated list of doc subdirs to publish, Default: 'cxx python'.
+    -k path       SSH key to upload the docs.
+    -v version    Force a version, Default: git-describe on source dir.
+    -d path       Deploy to a local directory instead of rsync (for testing).
+    -u            Update latest release."
+
+DOC_TYPES="cxx python"
+
+while getopts "p:U:s:b:v:w:k:t:d:u" opt
+do
+  case $opt in
+    p) PROJECT="${OPTARG}";;
+    U) DOCS_URL="${OPTARG}";;
+    s) SRC_DIR="${OPTARG}";;
+    b) BUILD_DIR="${OPTARG}";;
+    v) VERSION="${OPTARG}";;
+    w) WORK_DIR="${OPTARG}";;
+    k) SSH_PRIVATE_KEY_PATH="${OPTARG}";;
+    t) DOC_TYPES="${OPTARG}";;
+    d) LOCAL_DEPLOY_DIR="${OPTARG}";;
+    u) UPDATE_LATEST="true";;
+    *) echo "${HELP_MSG}"; exit 0;;
+  esac
+done
+shift $((OPTIND - 1))
+
+if [ -z "${PROJECT}" ] || [ -z "${DOCS_URL}" ] || [ -z "${SRC_DIR}" ] || [ -z "${BUILD_DIR}" ] || [ -z "${WORK_DIR}" ]
+then
+  echo "error: missing mandatory arguments"
+  echo "${HELP_MSG}"
+  exit 1
+fi
+
+if [ -n "${UPDATE_LATEST}" ] && ! [[ "${VERSION}" =~ ^v[0-9]+\.[0-9]+\.[0-9]+.*$ ]]
+then
+  echo "error: updating latest with non tag-released version"
+  echo "${HELP_MSG}"
+  exit 2
+fi
+
+if [ -z "${VERSION}" ]
+then
+  VERSION=$(git -C "$SRC_DIR" describe)
+fi
+
+readonly DOCS_BASE="${PROJECT}-docs"
+mkdir -p "${WORK_DIR}/${DOCS_BASE}"
+cd "${WORK_DIR}/${DOCS_BASE}"
+
+# -----------------------------------------------------------------------------
+# Grab Content
+# -----------------------------------------------------------------------------
+curl -OL "${DOCS_URL}/versions" || true
+curl -OL "${DOCS_URL}/versions.json" || true
+cp -v "${KDOCS_DATA_DIR}/${PROJECT}-version.js" .
+
+# -----------------------------------------------------------------------------
+# Copy Documentation to target
+# -----------------------------------------------------------------------------
+mkdir -p "${VERSION}"
+# shellcheck disable=SC2086
+for doctype in ${DOC_TYPES}
+do
+  cp -r "${BUILD_DIR}/doc/${doctype}" "${VERSION}/${doctype}"
+  rm -rf "${VERSION}/${doctype}/.doctrees"
+done
+
+# -----------------------------------------------------------------------------
+# Update available `versions` file.
+# -----------------------------------------------------------------------------
+echo "${VERSION}" >> versions
+
+LC_ALL=C sort --version-sort --reverse --unique --output versions versions
+sed --regexp-extended -i '/v[[:digit:]]+\.[[:digit:]]+\.[[:digit:]]+.*/!d' versions
+
+# -----------------------------------------------------------------------------
+# Update available `versions.json` file.
+# -----------------------------------------------------------------------------
+GENERATED_TAGS="$(
+  sed --regexp-extended '
+     {
+       s/v(.*)/{ "value": "v\1",  "label": "\1"}/
+     }
+     $! {
+       s/$/,/
+     }' versions
+     )"
+
+last_release=$(head -n1 versions | tr -d '\n')
+cat << EOF > versions.json
+[
+{ "value": "nightly", "label": "nightly (development)" },
+{ "value": "latest",  "label": "latest release ($last_release)" },
+$GENERATED_TAGS
+]
+EOF
+
+# -----------------------------------------------------------------------------
+# Commit to server
+# -----------------------------------------------------------------------------
+
+if [ -n "$UPDATE_LATEST" ]
+then
+  if [ -d latest ]; then
+      rm -rf latest
+  fi
+  cp -av "$VERSION"/ latest/
+fi
+
+if [ -n "${LOCAL_DEPLOY_DIR}" ]
+then
+  mkdir -p "${LOCAL_DEPLOY_DIR}"
+  cp -r ./* "${LOCAL_DEPLOY_DIR}/"
+elif [ -f "${SSH_PRIVATE_KEY_PATH}" ]
+then
+  rsync \
+    --delete \
+    --progress \
+    --recursive \
+    --times \
+    --verbose \
+    --rsh="ssh -o stricthostkeychecking=accept-new -i $SSH_PRIVATE_KEY_PATH" \
+    ./* kitware@web:
+fi

@@ -1,0 +1,84 @@
+.title-line {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-direction: row;
+}
+
+.kdocs-switch-python {
+    display: flex;
+    justify-content: space-around;
+    align-items: center;
+    flex-direction: row;
+    margin-bottom: 10px;
+}
+
+img.cpp {
+    padding: 0 5px;
+}
+
+img.python {
+    padding: 0 3px;
+}
+
+.kdocs-lang-link {
+    color: #1C2C35;
+    font-weight: bold;
+    opacity: 0.7;
+}
+
+.kdocs-lang-link:hover {
+    opacity: 1;
+}
+
+.kdocs-lang-link.active {
+    opacity: 1;
+}
+
+.kdocs-title-cpp .kdocs-lang-link.python {
+    margin-left: 20px;
+}
+
+.kdocs-title-cpp {
+    padding: 0 20px;
+    height: 56px;
+}
+
+.langSwitch {
+    text-align: right;
+}
+
+.kdocs-logo {
+    height: 50px;
+    margin-right: 20px;
+}
+
+/* Reset image in title section */
+.wy-side-nav-search img {
+    height: auto;
+    width: auto;
+}
+
+.wy-side-nav-search img {
+    height: 50px;
+}
+
+.kdocs-title-python img.lang-logo {
+    height: 16px;
+}
+
+.kdocs-title-cpp .lang-logo {
+    height: 25px;
+}
+
+.versionSelector.cxx {
+    height: 30px;
+    font-family: Roboto, sans-serif;
+    font-size: 14px;
+}
+
+.versionSelector.python {
+    width: 100%;
+    font-size: 14.4px;
+    font-family: "Lato","proxima-nova","Helvetica Neue",Arial,sans-serif;
+}

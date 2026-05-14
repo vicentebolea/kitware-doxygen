@@ -1,0 +1,93 @@
+name: CI
+
+on:
+  push:
+  pull_request:
+
+jobs:
+
+  lint-js:
+    name: Lint JavaScript
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+      - run: npm ci
+      - run: npm run lint
+
+  lint-bash:
+    name: Lint Bash
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - run: shellcheck --shell=bash Scripts/docs_uploader.in
+
+  test:
+    name: Unit Tests
+    runs-on: ubuntu-latest
+    needs: [lint-js, lint-bash]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+      - name: Install system dependencies
+        run: sudo apt-get install -y --no-install-recommends cmake ninja-build
+      - name: Configure
+        run: |
+          cmake -S . -B build -G Ninja \
+            -DKDOCS_PROJECT=paraview \
+            -DKDOCS_DOCS_BASE=paraview-docs
+      - name: Build
+        run: cmake --build build
+      - name: Test
+        run: ctest --test-dir build -LE integration --output-on-failure
+
+  integration:
+    name: Integration — ${{ matrix.project }}
+    runs-on: ubuntu-latest
+    needs: test
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - project: vtk
+            repo: https://gitlab.kitware.com/vtk/vtk.git
+            tag: v9.6.2
+            cmake_var: KDOCS_VTK_SOURCE_DIR
+          - project: paraview
+            repo: https://gitlab.kitware.com/paraview/paraview.git
+            tag: v6.0.1
+            cmake_var: KDOCS_PARAVIEW_SOURCE_DIR
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+      - name: Install system dependencies
+        run: sudo apt-get install -y --no-install-recommends cmake ninja-build doxygen
+      - name: Clone ${{ matrix.project }} ${{ matrix.tag }}
+        run: |
+          git clone --depth 1 --branch ${{ matrix.tag }} \
+            --no-recurse-submodules \
+            ${{ matrix.repo }} src
+      - name: Configure
+        run: |
+          cmake -S . -B build -G Ninja \
+            -DKDOCS_PROJECT=${{ matrix.project }} \
+            -DKDOCS_DOCS_BASE=${{ matrix.project }}-docs \
+            -D${{ matrix.cmake_var }}=${{ github.workspace }}/src
+      - name: Build
+        run: cmake --build build
+      - name: Integration Test
+        run: ctest --test-dir build -L integration --output-on-failure
+        timeout-minutes: 60
+      - name: Upload doxygen site
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: ${{ matrix.project }}-doxygen-site
+          path: build/itest/${{ matrix.project }}/deploy/
+          retention-days: 7
