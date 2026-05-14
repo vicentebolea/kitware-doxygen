@@ -229,5 +229,5 @@ function(kdocs_add_integration_test project source_dir doc_types version)
   )
 endfunction()
 
-kdocs_add_integration_test(vtk      "${KDOCS_VTK_SOURCE_DIR}"     "cxx" v9.6.2)
-kdocs_add_integration_test(paraview "${KDOCS_PARAVIEW_SOURCE_DIR}" "cxx" v6.0.1)
+kdocs_add_integration_test(vtk      "${KDOCS_VTK_SOURCE_DIR}"     "cxx" v9.6.1)
+kdocs_add_integration_test(paraview "${KDOCS_PARAVIEW_SOURCE_DIR}" "cxx" v6.1.0)

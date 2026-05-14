@@ -54,12 +54,12 @@ jobs:
       matrix:
         include:
           - project: vtk
-            repo: https://gitlab.kitware.com/vtk/vtk.git
-            tag: v9.6.2
+            repo: https://github.com/Kitware/VTK.git
+            tag: v9.6.1
             cmake_var: KDOCS_VTK_SOURCE_DIR
           - project: paraview
-            repo: https://gitlab.kitware.com/paraview/paraview.git
-            tag: v6.0.1
+            repo: https://github.com/Kitware/ParaView.git
+            tag: v6.1.0
             cmake_var: KDOCS_PARAVIEW_SOURCE_DIR
     steps:
       - uses: actions/checkout@v4
