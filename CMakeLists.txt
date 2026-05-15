@@ -8,7 +8,7 @@ find_program(NPM_EXECUTABLE npm REQUIRED)
 
 set(KDOCS_PROJECT   "paraview"              CACHE STRING "Project name (e.g. paraview, vtk)")
 set(KDOCS_DOCS_BASE "${KDOCS_PROJECT}-docs" CACHE STRING "URL base path for the docs site")
-set(KDOCS_LOGO      "${KDOCS_PROJECT}-logo.png" CACHE STRING "Logo filename in the doxygen header")
+set(KDOCS_LOGO "/${KDOCS_DOCS_BASE}/${KDOCS_PROJECT}-logo-small.png" CACHE STRING "Logo src for the doxygen header (absolute URL or relative path)")
 
 # ---------------------------------------------------------------------------
 # Generate header.html from template (@ONLY so doxygen $variables are intact)

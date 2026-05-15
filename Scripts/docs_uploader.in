@@ -67,6 +67,16 @@ curl -OL "${DOCS_URL}/versions" || true
 curl -OL "${DOCS_URL}/versions.json" || true
 cp -v "${KDOCS_DATA_DIR}/${PROJECT}-version.js" .
 
+# Copy project logo if available (looked up in source tree, then KDOCS_LOGO_FILE env)
+_logo_src="${SRC_DIR}/Utilities/Doxygen/images/${PROJECT}-logo-small.png"
+if [ -f "${_logo_src}" ]
+then
+  cp -v "${_logo_src}" "${PROJECT}-logo-small.png"
+elif [ -n "${KDOCS_LOGO_FILE}" ] && [ -f "${KDOCS_LOGO_FILE}" ]
+then
+  cp -v "${KDOCS_LOGO_FILE}" "${PROJECT}-logo-small.png"
+fi
+
 # -----------------------------------------------------------------------------
 # Copy Documentation to target
 # -----------------------------------------------------------------------------

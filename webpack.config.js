@@ -16,7 +16,8 @@ module.exports = {
   },
   plugins: [
     new webpack.DefinePlugin({
-      __DOCS_BASE__: JSON.stringify(docsBase)
+      __DOCS_BASE__: JSON.stringify(docsBase),
+      __PROJECT__:   JSON.stringify(project)
     })
   ],
   module: {

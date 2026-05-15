@@ -3,6 +3,7 @@ import cxxIcon from "../Assets/cpp.png";
 import pythonIcon from "../Assets/python.png";
 
 const docsBase = __DOCS_BASE__;
+const project  = __PROJECT__;
 const urlRegExp = new RegExp(docsBase + "/([^/]+)/(cxx|python)/");
 const langageMap = { python: "cxx", cxx: "python" };
 
@@ -10,7 +11,8 @@ const langageMap = { python: "cxx", cxx: "python" };
 
 function patchCPP(selectHTML, toggleLangHTML) {
   const mainContainer = document.querySelector("#titlearea");
-  mainContainer.innerHTML = `<div class="kdocs-title-cpp title-line"><div class="title-line"><img class="kdocs-logo" src="${docsBase}-logo-small.png" />${selectHTML}</div><div class="langSwitch title-line">${toggleLangHTML}</div></div>`;
+  const logoHTML = `<img class="kdocs-logo" src="/${docsBase}/${project}-logo-small.png" onerror="this.style.display='none'" />`;
+  mainContainer.innerHTML = `<div class="kdocs-title-cpp title-line"><div class="title-line">${logoHTML}${selectHTML}</div><div class="langSwitch title-line">${toggleLangHTML}</div></div>`;
   mainContainer.querySelector("select").addEventListener("change", onSwitch);
 }
 

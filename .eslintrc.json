@@ -9,7 +9,8 @@
     "sourceType": "module"
   },
   "globals": {
-    "__DOCS_BASE__": "readonly"
+    "__DOCS_BASE__": "readonly",
+    "__PROJECT__":   "readonly"
   },
   "overrides": [
     {
